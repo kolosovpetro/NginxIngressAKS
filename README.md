@@ -1,57 +1,69 @@
-# Terraform template
+# NGINX Ingress integration with AKS (including KeyVault Certificates and HTTPS)
 
-Terraform template for modules and submodules.
-Includes pre-commit hooks that lint the terraform code and generate module's
-documentation as part of README file.
-Contains examples of terraform CI/CD pipelines for GitHub Actions and Azure Pipelines.
+## Description
 
-## Azure naming conventions
+This project demonstrates a secure NGINX Ingress integration with Azure Kubernetes Service (AKS), leveraging
+Azure KeyVault for TLS certificate management.
+It automates the deployment of a complete HTTPS ingress solution,
+where TLS certificates are stored securely in Azure KeyVault
+and synced to Kubernetes secrets using the `akv2k8s` controller.
 
-- [Define your naming convention](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming)
-- [Azure naming module](https://registry.terraform.io/modules/Azure/naming/azurerm/latest)
+- https://nginx-ingress-test.razumovsky.me
 
-## Terraform Init
+## Overview
 
-- Create and configure Azure Storage Account for Terraform state
-- Create `azure.sas.conf` file with the following content:
-    ```bash
-    storage_account_name = "storage_account_name"
-    container_name       = "container_name"
-    key                  = "terraform.tfstate"
-    sas_token            = "sas_token"
-    ```
-- `terraform init -backend-config="azure.sas.conf" -reconfigure -upgrade`
+The project provisions the following components:
 
-## Module referencing
+- Azure Kubernetes Service (AKS) cluster with managed identity
+- Azure KeyVault for secure TLS certificate storage
+- TLS certificate upload and configuration
+- NGINX Ingress Controller installed via Helm
+- `akv2k8s` (Azure Key Vault to Kubernetes) for syncing secrets and certificates
+- PowerShell automation for managing Cloudflare DNS records
+- Test Kubernetes deployment with TLS-enabled Ingress
 
-- Bitbucket SSH: `git::git@bitbucket.org:kolosovpetro/terraform.git//modules/storage`
-- Github SSH: `git::git@github.com:kolosovpetro/terraform.git//modules/storage`
-- Github HTTP: `github.com/kolosovpetro/AzureLinuxVMTerraform.git//modules/ubuntu-vm-key-auth-no-pip?ref=master`
+## Deployment order
 
-## Pre-commit configuration
+- terraform plan
+- terraform apply
+- .\Configure-Nginx-Ingress-HELM.ps1
+- .\Configure-Cloudflare-Records.ps1
+- .\Configure-Kv-CRD.ps1
+- .\Configure-Kv-Nodepool-RBAC.ps1
 
-- Install python3 via Windows Store
-- `pip install --upgrade pip`
-- `pip install pre-commit`
-- Update PATH variable
-- `pre-commit install`
+## Configuration
 
-### Install terraform docs
+- Deploy AKS cluster with User Assigned Managed Identity (UAMI)
+- Deploy Azure KeyVault and import/upload TLS certificate
+- Install NGINX Ingress Controller via Helm
+- Configure and install akv2k8s Custom Resource Definitions (CRD)
+- Provision a test deployment with:
+    - ClusterIP service
+    - TLS-enabled Ingress using a synced secret from KeyVault
+- Automate DNS record creation in Cloudflare via PowerShell scripts
 
-- `choco install terraform-docs`
+### Node Pool Managed Identity
 
-### Install tflint
+- Role: Key Vault Secrets User
+  Scope: Azure KeyVault used for TLS certificates
 
-- `choco install tflint`
+- Role: Key Vault Certificates Officer
+  Scope: Azure KeyVault used for TLS certificates
 
-### Documentation
+Note: These roles are necessary for the `akv2k8s` controller to fetch secrets and certificates from KeyVault.
 
-- https://github.com/antonbabenko/pre-commit-terraform
-- https://github.com/kolosovpetro/AzureTerraformBackend
-- https://github.com/terraform-docs/terraform-docs
-- https://terraform-docs.io/user-guide/installation/
-- https://pre-commit.com/
+## Notes
 
-## Deploy storage account for terraform state
+- RBAC changes may require several minutes to propagate
+- Ensure Azure KeyVault has `public network access` enabled or the AKS subnet is granted access
+- The managed identity used by AKS must be assigned roles directly on the KeyVault (not inherited)
+- You must have Contributor permissions in the Azure subscription to assign roles
 
-- See [CreateAzureStorageAccount.ps1](./CreateAzureStorageAccount.ps1)
+## Prerequisites
+
+- Azure CLI
+- Terraform
+- Helm v3
+- kubectl
+- PowerShell Core
+- Cloudflare API token with DNS permissions
