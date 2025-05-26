@@ -29,7 +29,7 @@ The project provisions the following components:
 - .\Configure-Nginx-Ingress-HELM.ps1
 - .\Configure-Cloudflare-Records.ps1
 - .\Configure-Kv-CRD.ps1
-- .\Configure-Kv-Nodepool-RBAC.ps1
+- .\Configure-Deployment.ps1
 
 ## Configuration
 
