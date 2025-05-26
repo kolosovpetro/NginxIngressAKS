@@ -44,11 +44,8 @@ The project provisions the following components:
 
 ### Node Pool Managed Identity
 
-- Role: Key Vault Secrets User
-  Scope: Azure KeyVault used for TLS certificates
-
-- Role: Key Vault Certificates Officer
-  Scope: Azure KeyVault used for TLS certificates
+- **Role**: `Key Vault Secrets User`. **Scope**: Azure KeyVault used for TLS certificates
+- **Role**: `Key Vault Certificate User`. **Scope**: Azure KeyVault used for TLS certificates
 
 Note: These roles are necessary for the `akv2k8s` controller to fetch secrets and certificates from KeyVault.
 
